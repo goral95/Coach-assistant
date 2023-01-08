@@ -27,7 +27,7 @@ use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
         new GetCollection(security: "is_granted('ROLE_USER')"),
         new Post(validationContext: ['groups' => ['Default', 'create']]),
         new Get(security: "is_granted('ROLE_USER')"),
-        new Put(security: "is_granted('ROLE_USER')"),
+        new Put(security: "is_granted('ROLE_USER') and id == user.getId()"),
         new Delete(security: "is_granted('ROLE_ADMIN')")
     ],
     normalizationContext: ['groups' => ['user:read']],

@@ -21,13 +21,16 @@ security:
         main:
             stateless: true
             provider: users
+            entry_point: jwt
             json_login:
-                check_path: auth # The name in routes.yaml is enough for mapping
+                check_path: /api/login # The name in routes.yaml is enough for mapping
                 username_path: email
                 password_path: password
                 success_handler: lexik_jwt_authentication.handler.authentication_success
                 failure_handler: lexik_jwt_authentication.handler.authentication_failure
             jwt: ~
+            refresh_jwt:
+                check_path: /api/token/refresh
 
     access_control:
         #- { path: ^/$, roles: PUBLIC_ACCESS } # Allows accessing the Swagger UI

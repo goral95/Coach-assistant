@@ -5,5 +5,8 @@ controllers:
     type: attribute
 
 auth:
-    path: /auth
+    path: /api/login
     methods: ['POST']
+
+api_refresh_token:
+    path: /api/token/refresh
