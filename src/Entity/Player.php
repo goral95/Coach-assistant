@@ -18,6 +18,7 @@ use Symfony\Component\Serializer\Normalizer\DateTimeNormalizer;
 use ApiPlatform\Metadata\Link;
 
 #[ORM\Entity(repositoryClass: PlayerRepository::class)]
+#[ORM\EntityListeners(["App\Doctrine\PlayerUserListener"])]
 #[ApiResource(
     operations: [
         new GetCollection(security: "is_granted('ROLE_USER')"),
