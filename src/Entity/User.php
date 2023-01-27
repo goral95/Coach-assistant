@@ -3,7 +3,6 @@
 namespace App\Entity;
 
 use ApiPlatform\Metadata\Get;
-use ApiPlatform\Metadata\Put;
 use ApiPlatform\Metadata\Post;
 use Doctrine\DBAL\Types\Types;
 use ApiPlatform\Metadata\Delete;
@@ -12,6 +11,7 @@ use Doctrine\ORM\Mapping as ORM;
 use App\Repository\UserRepository;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\Put;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\Common\Collections\ArrayCollection;
 use Symfony\Component\Serializer\Annotation\Groups;
@@ -62,6 +62,16 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[Groups('user:write')]
     #[SerializedName('password')]
     #[Assert\NotBlank(groups: ['create'])]
+    #[Assert\Length(
+        min: 6,
+        max: 20,
+        minMessage: 'Password must be at least {{ limit }} characters long',
+        maxMessage: 'Password cannot be longer than {{ limit }} characters',
+    )]
+    #[Assert\Regex(
+        pattern: '/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/',
+        message: 'Password should contain at least one small letter, big letter and digit',
+    )]
     private ?string $plainPassword = null;
 
     #[ORM\Column(length: 255)]

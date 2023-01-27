@@ -3,54 +3,78 @@
 
 namespace App\Tests;
 
-use App\Entity\User;
-use DateTimeInterface;
-use ApiPlatform\Symfony\Bundle\Test\ApiTestCase;
-use DateTime;
+use App\Test\CustomApiTestCase;
 use Hautelook\AliceBundle\PhpUnit\ReloadDatabaseTrait;
 
-class AuthenticationTest extends ApiTestCase
+class AuthenticationTest extends CustomApiTestCase
 {
     use ReloadDatabaseTrait;
 
     public function testLogin(): void
     {
         $client = self::createClient();
-        $container = self::getContainer();
 
-        $user = new User();
-        $user->setEmail('test@example.com');
-        $user->setPassword(
-            $container->get('security.user_password_hasher')->hashPassword($user, '$3CR3T')
-        );
-        $user->setName("Luki");
-        $user->setSurname("Luki2");
-        $user->setLicense('a');
-        $user->setBirthDate(new DateTime("now"));
-
-        $manager = $container->get('doctrine')->getManager();
-        $manager->persist($user);
-        $manager->flush();
-
+        $user = $this->createUser('user@gmail.com','Foofoo123');
+        
         // retrieve a token
-        $response = $client->request('POST', '/auth', [
-            'headers' => ['Content-Type' => 'application/json'],
-            'json' => [
-                'email' => 'test@example.com',
-                'password' => '$3CR3T',
-            ],
-        ]);
+        $response = $this->logIn($client, 'user@gmail.com','Foofoo123');
 
         $json = $response->toArray();
         $this->assertResponseIsSuccessful();
         $this->assertArrayHasKey('token', $json);
 
         // test not authorized
-        $client->request('GET', '/api');
+        $client->request('GET', '/api/users');
         $this->assertResponseStatusCodeSame(401);
 
         // test authorized
-        $client->request('GET', '/api', ['auth_bearer' => $json['token']]);
+        $client->request('GET', '/api/users', ['auth_bearer' => $json['token']]);
         $this->assertResponseIsSuccessful();
     }
+
+    public function testRefreshToken(): void
+    {
+        $client = self::createClient();
+
+        $user = $this->createUser('user@gmail.com','Foofoo123');
+        
+        // retrieve a token
+        $response = $this->logIn($client, 'user@gmail.com','Foofoo123');
+
+        $json = $response->toArray();
+        $this->assertArrayHasKey('refresh_token', $json);
+
+        $responeRefresh = $this->refreshToken($client, $json['refresh_token']);
+        $jsonRefresh = $responeRefresh->toArray();
+        $this->assertResponseIsSuccessful();
+        $this->assertArrayHasKey('token', $jsonRefresh);
+
+        $client->request('GET', '/api/users', ['auth_bearer' => $jsonRefresh['token']]);
+        $this->assertResponseIsSuccessful();  
+    }
+
+    public function testLogout(): void
+    {
+        $client = self::createClient();
+
+        $user = $this->createUser('user@gmail.com','Foofoo123');
+        
+        // retrieve a token
+        $response = $this->logIn($client, 'user@gmail.com','Foofoo123');
+
+        $json = $response->toArray();
+
+        $client->request('POST', '/api/logout', [
+            'json' => [
+                'refresh_token' => $json['refresh_token']
+            ],
+        ]);
+        $this->assertResponseIsSuccessful();
+        
+
+        $this->refreshToken($client, $json['refresh_token']);
+        $this->assertResponseStatusCodeSame(401);  
+    }
+
+
 }
