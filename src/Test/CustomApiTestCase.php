@@ -7,9 +7,44 @@ use App\Entity\User;
 use Doctrine\Persistence\ManagerRegistry;
 use ApiPlatform\Symfony\Bundle\Test\Client;
 use ApiPlatform\Symfony\Bundle\Test\ApiTestCase;
+use App\Entity\Player;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
 class CustomApiTestCase extends ApiTestCase{
+
+    protected function createPlayer(User $user, string $name, string $surname): Player{
+        
+        $player = new Player();
+        $player->setName($name);
+        $player->setSurname($surname);
+        $player->setBirthDate(new DateTime("now"));
+        $player->setFoot('x');
+        $player->setCity('x');
+        $player->setUser($user);
+
+        $em = $this->getEntityManager();
+        $em->persist($player);
+        $em->flush();
+
+        return $player;
+    }
+
+    protected function createPlayerWithDate(User $user, string $name, string $surname, Datetime $birthDate): Player{
+        
+        $player = new Player();
+        $player->setName($name);
+        $player->setSurname($surname);
+        $player->setBirthDate($birthDate);
+        $player->setFoot('x');
+        $player->setCity('x');
+        $player->setUser($user);
+
+        $em = $this->getEntityManager();
+        $em->persist($player);
+        $em->flush();
+
+        return $player;
+    }
 
     protected function createUser(string $email, string $password): User{
         $user = new User();
@@ -41,10 +76,11 @@ class CustomApiTestCase extends ApiTestCase{
         return $respone;
     }
 
-    protected function createUserAndLogIn(Client $client, string $email, string $password): User{
+    protected function createUserAndLogIn(Client $client, string $email, string $password): Array{
         $user = $this->createUser($email, $password);
-        $this->logIn($client, $email, $password);
-        return $user;
+        $authTokens = $this->logIn($client, $email, $password);
+        $response = ["user" => $user, "authTokens" => $authTokens->toArray()];
+        return $response;
     }
 
     protected function refreshToken(Client $client, string $token): ResponseInterface{
