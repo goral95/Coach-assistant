@@ -4,33 +4,68 @@ namespace App\Entity;
 
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\Put;
+use ApiPlatform\Metadata\Link;
 use ApiPlatform\Metadata\Post;
 use Doctrine\DBAL\Types\Types;
 use ApiPlatform\Metadata\Delete;
 use Doctrine\ORM\Mapping as ORM;
+use ApiPlatform\Metadata\ApiFilter;
 use App\Repository\PlayerRepository;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Doctrine\Orm\Filter\DateFilter;
+use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
 use Symfony\Component\Serializer\Annotation\Groups;
 use Symfony\Component\Serializer\Annotation\Context;
 use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\Serializer\Annotation\SerializedName;
 use Symfony\Component\Serializer\Normalizer\DateTimeNormalizer;
-use ApiPlatform\Metadata\Link;
 
 #[ORM\Entity(repositoryClass: PlayerRepository::class)]
 #[ORM\EntityListeners(["App\Doctrine\PlayerUserListener"])]
 #[ApiResource(
     operations: [
-        new GetCollection(security: "is_granted('ROLE_USER')"),
         new Post(security: "is_granted('ROLE_USER')"),
-        new Get(security: "is_granted('ROLE_USER')"),
-        new Put(security: "is_granted('ROLE_USER') and object.owner == user",
+        new Get(security: "is_granted('ROLE_USER') and object.getUser() == user",
+                securityMessage: 'Only owner can watch player'),
+        new Put(security: "is_granted('ROLE_USER') and object.getUser() == user",
                 securityMessage: 'Only owner can edit player'),
-        new Delete(security: "is_granted('ROLE_USER')")
+        new Delete(security: "is_granted('ROLE_USER') and object.getUser() == user",
+                securityMessage: 'Only owner can delete player')
     ],
     normalizationContext: ['groups' => ['player:read']],
     denormalizationContext: ['groups' => ['player:write']],
     )]
+#[ApiResource(
+    uriTemplate: '/users/{id}/players.{_format}',
+    uriVariables: [
+        'id' => new Link(
+            fromClass: User::class, 
+            fromProperty: 'user'           
+        )        
+    ],
+    operations: [new GetCollection(
+                    security: "is_granted('ROLE_USER') and id == user.getId()",
+                    securityMessage: 'Only owner can watch players'),
+                new GetCollection(
+                    security: "is_granted('ROLE_USER') and id == user.getId()",
+                    securityMessage: 'Only owner can watch players',
+                    name: 'get_name_asc', uriTemplate: '/users/{id}/players/name-asc', order: ['name', 'surname']),
+                new GetCollection(
+                    security: "is_granted('ROLE_USER') and id == user.getId()",
+                    securityMessage: 'Only owner can watch players',
+                    name: 'get_birthdate_asc', uriTemplate: '/users/{id}/players/birth-date-asc', order: ['birthDate', 'name', 'surname'])
+                ]
+                
+)]
+#[ApiFilter(DateFilter::class, properties: ['birthDate'])]
+#[ApiFilter(SearchFilter::class, properties: [
+    'name' => 'istart', 
+    'surname' => 'istart', 
+    'foot' => 'exact', 
+    'position' => 'exact', 
+    'city' => 'exact'
+    ])]
 class Player
 {
     #[ORM\Id]
@@ -69,7 +104,8 @@ class Player
 
     #[ORM\ManyToOne(inversedBy: 'user')]
     #[ORM\JoinColumn(nullable: false)]
-    #[Groups(['player:read', 'player:write'])]
+    #[Groups(['player:read'])]
+    #[SerializedName('coach')]
     private ?User $user = null;
 
     public function getId(): ?int
