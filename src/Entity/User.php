@@ -104,9 +104,13 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[SerializedName('players')]
     private Collection $user;
 
+    #[ORM\OneToMany(mappedBy: 'user', targetEntity: TrainingUnit::class)]
+    private Collection $trainingUnits;
+
     public function __construct()
     {
         $this->user = new ArrayCollection();
+        $this->trainingUnits = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -274,6 +278,36 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
             // set the owning side to null (unless already changed)
             if ($user->getUser() === $this) {
                 $user->setUser(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, TrainingUnit>
+     */
+    public function getTrainingUnits(): Collection
+    {
+        return $this->trainingUnits;
+    }
+
+    public function addTrainingUnit(TrainingUnit $trainingUnit): self
+    {
+        if (!$this->trainingUnits->contains($trainingUnit)) {
+            $this->trainingUnits->add($trainingUnit);
+            $trainingUnit->setUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeTrainingUnit(TrainingUnit $trainingUnit): self
+    {
+        if ($this->trainingUnits->removeElement($trainingUnit)) {
+            // set the owning side to null (unless already changed)
+            if ($trainingUnit->getUser() === $this) {
+                $trainingUnit->setUser(null);
             }
         }
 
