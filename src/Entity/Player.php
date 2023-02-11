@@ -6,6 +6,8 @@ use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\Put;
 use ApiPlatform\Metadata\Link;
 use ApiPlatform\Metadata\Post;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use ApiPlatform\Metadata\Delete;
 use Doctrine\ORM\Mapping as ORM;
@@ -108,6 +110,14 @@ class Player
     #[SerializedName('coach')]
     private ?User $user = null;
 
+    #[ORM\ManyToMany(targetEntity: TrainingUnit::class, mappedBy: 'playersAttendanceList')]
+    private Collection $completedTrainings;
+
+    public function __construct()
+    {
+        $this->completedTrainings = new ArrayCollection();
+    }
+
     public function getId(): ?int
     {
         return $this->id;
@@ -193,6 +203,33 @@ class Player
     public function setUser(?User $user): self
     {
         $this->user = $user;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, TrainingUnit>
+     */
+    public function getCompletedTrainings(): Collection
+    {
+        return $this->completedTrainings;
+    }
+
+    public function addCompletedTraining(TrainingUnit $completedTraining): self
+    {
+        if (!$this->completedTrainings->contains($completedTraining)) {
+            $this->completedTrainings->add($completedTraining);
+            $completedTraining->addPlayersAttendanceList($this);
+        }
+
+        return $this;
+    }
+
+    public function removeCompletedTraining(TrainingUnit $completedTraining): self
+    {
+        if ($this->completedTrainings->removeElement($completedTraining)) {
+            $completedTraining->removePlayersAttendanceList($this);
+        }
 
         return $this;
     }
