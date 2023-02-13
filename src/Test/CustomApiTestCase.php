@@ -8,9 +8,29 @@ use Doctrine\Persistence\ManagerRegistry;
 use ApiPlatform\Symfony\Bundle\Test\Client;
 use ApiPlatform\Symfony\Bundle\Test\ApiTestCase;
 use App\Entity\Player;
+use App\Entity\TrainingUnit;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
 class CustomApiTestCase extends ApiTestCase{
+
+    protected function createTraining(User $user, string $topic, int $duration): TrainingUnit{
+        
+        $training = new TrainingUnit();
+        $training->setTopic($topic);
+        $training->setDuration($duration);
+        $training->setDate(new DateTime("now"));
+        $training->setWarmPart($topic.' Warm');
+        $training->setFirstMainPart($topic.' First Main');
+        $training->setSecondMainPart($topic.' Second Main');
+        $training->setEndPart($topic.' End');
+        $training->setUser($user);
+
+        $em = $this->getEntityManager();
+        $em->persist($training);
+        $em->flush();
+
+        return $training;
+    }
 
     protected function createPlayer(User $user, string $name, string $surname): Player{
         

@@ -2,13 +2,41 @@
 
 namespace App\Entity;
 
-use App\Repository\TrainingUnitRepository;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\Put;
+use ApiPlatform\Metadata\Post;
 use Doctrine\DBAL\Types\Types;
+use ApiPlatform\Metadata\Delete;
 use Doctrine\ORM\Mapping as ORM;
+use ApiPlatform\Metadata\ApiFilter;
+use ApiPlatform\Metadata\ApiResource;
+use App\Repository\TrainingUnitRepository;
+use Doctrine\Common\Collections\Collection;
+use ApiPlatform\Doctrine\Orm\Filter\DateFilter;
+use Doctrine\Common\Collections\ArrayCollection;
+use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Serializer\Annotation\Context;
+use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\Serializer\Annotation\SerializedName;
+use Symfony\Component\Serializer\Normalizer\DateTimeNormalizer;
 
 #[ORM\Entity(repositoryClass: TrainingUnitRepository::class)]
+#[ORM\EntityListeners(["App\Doctrine\TrainingUnitUserListener"])]
+#[ApiResource(
+    shortName: 'trainings', 
+    operations: [
+        new Post(security: "is_granted('ROLE_USER')"),
+        new Get(security: "is_granted('ROLE_USER') and object.getUser() == user",
+                securityMessage: 'Only owner can read training unit'),
+        new Put(security: "is_granted('ROLE_USER') and object.getUser() == user",
+                securityMessage: 'Only owner can edit training unit'),
+        new Delete(security: "is_granted('ROLE_USER') and object.getUser() == user",
+                securityMessage: 'Only owner can delete training unit')
+    ],
+    normalizationContext: ['groups' => ['training:read']],
+    denormalizationContext: ['groups' => ['training:write']],
+    )]
+#[ApiFilter(DateFilter::class, properties: ['date'])]
 class TrainingUnit
 {
     #[ORM\Id]
@@ -17,30 +45,52 @@ class TrainingUnit
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups(['training:read', 'training:write'])]
+    #[Assert\NotBlank]
     private ?string $topic = null;
 
     #[ORM\Column]
+    #[Groups(['training:read', 'training:write'])]
+    #[Assert\NotBlank]
+    #[Assert\Positive]
+    #[Assert\DivisibleBy(
+        value: 5,
+        message: 'Training duration must be a multiple of {{ compared_value }}.',
+    )]
     private ?int $duration = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
+    #[Context([DateTimeNormalizer::FORMAT_KEY => 'Y-m-d H:i'])]
+    #[Groups(['training:read', 'training:write'])]
+    #[Assert\NotBlank]
     private ?\DateTimeInterface $date = null;
 
     #[ORM\Column(type: Types::TEXT)]
+    #[Groups(['training:read', 'training:write'])]
+    #[Assert\NotBlank]
     private ?string $warmPart = null;
 
     #[ORM\Column(type: Types::TEXT)]
+    #[Groups(['training:read', 'training:write'])]
+    #[Assert\NotBlank]
     private ?string $firstMainPart = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
+    #[Groups(['training:read', 'training:write'])]
     private ?string $secondMainPart = null;
 
     #[ORM\Column(type: Types::TEXT)]
+    #[Groups(['training:read', 'training:write'])]
+    #[Assert\NotBlank]
     private ?string $endPart = null;
 
     #[ORM\ManyToOne(inversedBy: 'trainingUnits')]
+    #[Groups(['training:read'])]
+    #[SerializedName('coach')]
     private ?User $user = null;
 
     #[ORM\ManyToMany(targetEntity: Player::class, inversedBy: 'completedTrainings')]
+    #[Groups(['training:read'])]
     private Collection $playersAttendanceList;
 
     public function __construct()

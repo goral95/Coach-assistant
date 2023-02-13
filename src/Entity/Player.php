@@ -57,7 +57,8 @@ use Symfony\Component\Serializer\Normalizer\DateTimeNormalizer;
                     security: "is_granted('ROLE_USER') and id == user.getId()",
                     securityMessage: 'Only owner can watch players',
                     name: 'get_birthdate_asc', uriTemplate: '/users/{id}/players/birth-date-asc', order: ['birthDate', 'name', 'surname'])
-                ]
+                ],
+    normalizationContext: ['groups' => ['user:players:collection:read']],
                 
 )]
 #[ApiFilter(DateFilter::class, properties: ['birthDate'])]
@@ -77,31 +78,31 @@ class Player
 
     #[ORM\Column(length: 255)]
     #[Assert\NotBlank]
-    #[Groups(['player:read', 'player:write', 'user:read'])]
+    #[Groups(['player:read', 'player:write', 'user:read', 'training:read', 'user:players:collection:read'])]
     private ?string $name = null;
 
     #[ORM\Column(length: 255)]
     #[Assert\NotBlank]
-    #[Groups(['player:read', 'player:write', 'user:read'])]
+    #[Groups(['player:read', 'player:write', 'user:read', 'training:read', 'user:players:collection:read'])]
     private ?string $surname = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     #[Assert\NotBlank]
     #[Context([DateTimeNormalizer::FORMAT_KEY => 'Y-m-d'])]
-    #[Groups(['player:read', 'player:write', 'user:read'])]
+    #[Groups(['player:read', 'player:write', 'user:read', 'user:players:collection:read'])]
     private ?\DateTimeInterface $birthDate = null;
 
     #[ORM\Column(length: 255, nullable: true)]
-    #[Groups(['player:read', 'player:write'])]
+    #[Groups(['player:read', 'player:write', 'user:players:collection:read'])]
     private ?string $foot = null;
 
     #[ORM\Column(length: 255, nullable: true)]
-    #[Groups(['player:read', 'player:write'])]
+    #[Groups(['player:read', 'player:write', 'user:players:collection:read'])]
     private ?string $position = null;
 
     #[ORM\Column(length: 255)]
     #[Assert\NotBlank]
-    #[Groups(['player:read', 'player:write'])]
+    #[Groups(['player:read', 'player:write', 'user:players:collection:read'])]
     private ?string $city = null;
 
     #[ORM\ManyToOne(inversedBy: 'user')]

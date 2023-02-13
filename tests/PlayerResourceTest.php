@@ -183,7 +183,7 @@ class PlayerResourceTest extends CustomApiTestCase
 
         $this->assertResponseStatusCodeSame(404);
 
-        // delete not own player
+        // update not own player
         $client->request('PUT', '/api/players/2', [
             'auth_bearer' => $dataUser1['authTokens']['token'],
             'json' => ['name' => 'newname']
