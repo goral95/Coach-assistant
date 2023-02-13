@@ -25,3 +25,6 @@ services:
 
     App\Doctrine\PlayerUserListener:
         tags: ['doctrine.orm.entity_listener']
+
+    App\Doctrine\TrainingUnitUserListener:
+        tags: ['doctrine.orm.entity_listener']
