@@ -2,14 +2,17 @@
 
 namespace App\Entity;
 
+use App\Entity\User;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\Put;
+use ApiPlatform\Metadata\Link;
 use ApiPlatform\Metadata\Post;
 use Doctrine\DBAL\Types\Types;
 use ApiPlatform\Metadata\Delete;
 use Doctrine\ORM\Mapping as ORM;
 use ApiPlatform\Metadata\ApiFilter;
 use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\GetCollection;
 use App\Repository\TrainingUnitRepository;
 use Doctrine\Common\Collections\Collection;
 use ApiPlatform\Doctrine\Orm\Filter\DateFilter;
@@ -23,7 +26,7 @@ use Symfony\Component\Serializer\Normalizer\DateTimeNormalizer;
 #[ORM\Entity(repositoryClass: TrainingUnitRepository::class)]
 #[ORM\EntityListeners(["App\Doctrine\TrainingUnitUserListener"])]
 #[ApiResource(
-    shortName: 'trainings', 
+    shortName: 'Trainings', 
     operations: [
         new Post(security: "is_granted('ROLE_USER')"),
         new Get(security: "is_granted('ROLE_USER') and object.getUser() == user",
@@ -36,6 +39,23 @@ use Symfony\Component\Serializer\Normalizer\DateTimeNormalizer;
     normalizationContext: ['groups' => ['training:read']],
     denormalizationContext: ['groups' => ['training:write']],
     )]
+    #[ApiResource(
+        shortName: 'Trainings', 
+        uriTemplate: '/users/{id}/trainings.{_format}',
+        uriVariables: [
+            'id' => new Link(
+                fromClass: User::class, 
+                fromProperty: 'user'           
+            )        
+        ],
+        operations: [new GetCollection(
+                        security: "is_granted('ROLE_USER') and id == user.getId()",
+                        securityMessage: 'Only owner can watch players',
+                        order: ['date'])
+                    ],
+        normalizationContext: ['groups' => ['user:trainings:collection:read']],
+                    
+    )]
 #[ApiFilter(DateFilter::class, properties: ['date'])]
 class TrainingUnit
 {
@@ -45,12 +65,12 @@ class TrainingUnit
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
-    #[Groups(['training:read', 'training:write'])]
+    #[Groups(['training:read', 'training:write', 'user:trainings:collection:read'])]
     #[Assert\NotBlank]
     private ?string $topic = null;
 
     #[ORM\Column]
-    #[Groups(['training:read', 'training:write'])]
+    #[Groups(['training:read', 'training:write', 'user:trainings:collection:read'])]
     #[Assert\NotBlank]
     #[Assert\Positive]
     #[Assert\DivisibleBy(
@@ -61,7 +81,7 @@ class TrainingUnit
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     #[Context([DateTimeNormalizer::FORMAT_KEY => 'Y-m-d H:i'])]
-    #[Groups(['training:read', 'training:write'])]
+    #[Groups(['training:read', 'training:write', 'user:trainings:collection:read'])]
     #[Assert\NotBlank]
     private ?\DateTimeInterface $date = null;
 

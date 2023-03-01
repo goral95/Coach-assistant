@@ -32,6 +32,25 @@ class CustomApiTestCase extends ApiTestCase{
         return $training;
     }
 
+    protected function createTrainingWithDate(User $user, string $topic, int $duration, Datetime $date): TrainingUnit{
+        
+        $training = new TrainingUnit();
+        $training->setTopic($topic);
+        $training->setDuration($duration);
+        $training->setDate($date);
+        $training->setWarmPart($topic.' Warm');
+        $training->setFirstMainPart($topic.' First Main');
+        $training->setSecondMainPart($topic.' Second Main');
+        $training->setEndPart($topic.' End');
+        $training->setUser($user);
+
+        $em = $this->getEntityManager();
+        $em->persist($training);
+        $em->flush();
+
+        return $training;
+    }
+
     protected function createPlayer(User $user, string $name, string $surname): Player{
         
         $player = new Player();

@@ -236,4 +236,43 @@ class TrainingUnirResourceTest extends CustomApiTestCase
         ]);
     }
 
+    public function testReadAllUserTrainings(){
+        $client = self::createClient();
+        $dataUser1 = $this->createUserAndLogIn($client, "user1@example.com", "Foofoo123");
+        $user2 = $this->createUser("user2@example.com", "Foofoo123");
+        $this->createTrainingWithDate($dataUser1['user'], 'First User Training X', 90, DateTime::createFromFormat('Y-m-d H:i', '2020-08-21 10:00'));
+        $this->createTrainingWithDate($dataUser1['user'], 'First User Training Y', 75, DateTime::createFromFormat('Y-m-d H:i', '2020-08-21 18:00'));
+        $this->createTraining($user2, 'Second User Training', 90);
+        $this->createTrainingWithDate($dataUser1['user'], 'First User Training Z', 60, DateTime::createFromFormat('Y-m-d H:i', '2020-08-18 17:30'));
+        // $this->createTraining($dataUser1['user'], 'First User Training X', 60);
+        // $this->createTraining($dataUser1['user'], 'First User Training Y', 60);
+        // $this->createTraining($user2, 'Second User Training', 90);
+        // $this->createTraining($dataUser1['user'], 'First User Training Z', 60);
+
+        // not auth user
+        $client->request('GET', '/api/users/1/trainings');
+        $this->assertResponseStatusCodeSame(401);
+
+        // get other user trainings
+        $client->request('GET', '/api/users/2/trainings', [
+            'auth_bearer' => $dataUser1['authTokens']['token']
+            ]);
+        $this->assertResponseStatusCodeSame(403);
+
+        // success
+        $response = $client->request('GET', '/api/users/1/trainings', [
+            'auth_bearer' => $dataUser1['authTokens']['token']
+            ]);
+        $responseArray = $response->toArray();
+        $this->assertResponseStatusCodeSame(200);
+        $this->assertEquals(3, $responseArray['hydra:totalItems']);
+        foreach($responseArray['hydra:member'] as $testData){
+            $this->assertContains('/api/users/1', $testData);
+            $this->assertNotContains('/api/users/2', $testData);
+        }
+        $this->assertContains('2020-08-18 17:30', $responseArray['hydra:member'][0]);
+        $this->assertContains('2020-08-21 10:00', $responseArray['hydra:member'][1]);
+        $this->assertContains('2020-08-21 18:00', $responseArray['hydra:member'][2]);
+    }
+
 }
