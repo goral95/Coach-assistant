@@ -207,7 +207,7 @@ class PlayerResourceTest extends CustomApiTestCase
         $client = self::createClient();
         $dataUser1 = $this->createUserAndLogIn($client, "user1@example.com", "Foofoo123");
         $user2 = $this->createUser("user2@example.com", "Foofoo123");
-        $this->createPlayerWithDate($dataUser1['user'], 'jan', 'kowalski', DateTime::createFromFormat('Y-m-d', '1999-08-20'));
+        $player1 = $this->createPlayerWithDate($dataUser1['user'], 'jan', 'kowalski', DateTime::createFromFormat('Y-m-d', '1999-08-20'));
         $this->createPlayerWithDate($dataUser1['user'], 'dawid', 'podsiadlo', DateTime::createFromFormat('Y-m-d', '1999-08-20'));
         $this->createPlayer($user2, 'piotr', 'nowak');
         $this->createPlayerWithDate($dataUser1['user'], 'jan', 'bond', DateTime::createFromFormat('Y-m-d', '2010-08-20'));
@@ -229,10 +229,9 @@ class PlayerResourceTest extends CustomApiTestCase
         $responseArray = $response->toArray();
         $this->assertResponseStatusCodeSame(200);
         $this->assertEquals(3, $responseArray['hydra:totalItems']);
-        foreach($responseArray['hydra:member'] as $testData){
-            $this->assertContains('/api/users/1', $testData);
-            $this->assertNotContains('/api/users/2', $testData);
-        }
+        $this->assertContains('kowalski', $responseArray['hydra:member'][0]);
+        $this->assertContains('podsiadlo', $responseArray['hydra:member'][1]);
+        $this->assertContains('bond', $responseArray['hydra:member'][2]);
 
         // success order by name asc
         $response = $client->request('GET', '/api/users/1/players/name-asc', [
