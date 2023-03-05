@@ -207,7 +207,7 @@ class PlayerResourceTest extends CustomApiTestCase
         $client = self::createClient();
         $dataUser1 = $this->createUserAndLogIn($client, "user1@example.com", "Foofoo123");
         $user2 = $this->createUser("user2@example.com", "Foofoo123");
-        $player1 = $this->createPlayerWithDate($dataUser1['user'], 'jan', 'kowalski', DateTime::createFromFormat('Y-m-d', '1999-08-20'));
+        $this->createPlayerWithDate($dataUser1['user'], 'jan', 'kowalski', DateTime::createFromFormat('Y-m-d', '1999-08-20'));
         $this->createPlayerWithDate($dataUser1['user'], 'dawid', 'podsiadlo', DateTime::createFromFormat('Y-m-d', '1999-08-20'));
         $this->createPlayer($user2, 'piotr', 'nowak');
         $this->createPlayerWithDate($dataUser1['user'], 'jan', 'bond', DateTime::createFromFormat('Y-m-d', '2010-08-20'));

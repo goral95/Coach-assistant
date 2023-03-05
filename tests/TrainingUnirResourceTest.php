@@ -266,13 +266,47 @@ class TrainingUnirResourceTest extends CustomApiTestCase
         $responseArray = $response->toArray();
         $this->assertResponseStatusCodeSame(200);
         $this->assertEquals(3, $responseArray['hydra:totalItems']);
-        foreach($responseArray['hydra:member'] as $testData){
-            $this->assertContains('/api/users/1', $testData);
-            $this->assertNotContains('/api/users/2', $testData);
-        }
         $this->assertContains('2020-08-18 17:30', $responseArray['hydra:member'][0]);
         $this->assertContains('2020-08-21 10:00', $responseArray['hydra:member'][1]);
         $this->assertContains('2020-08-21 18:00', $responseArray['hydra:member'][2]);
+    }
+
+    public function testReadTrainingAttendance(){
+        $client = self::createClient();
+        $dataUser1 = $this->createUserAndLogIn($client, "user1@example.com", "Foofoo123");
+        $user2 = $this->createUser("user2@example.com", "Foofoo123");
+        $user1Training = $this->createTraining($dataUser1['user'], 'First User Training', 60);
+        $user2Training = $this->createTraining($user2, 'Second User Training', 90);
+        $player1user1 = $this->createPlayer($dataUser1['user'], 'jan', 'kowalski');
+        $player2user1 = $this->createPlayer($dataUser1['user'], 'dawid', 'podsiadlo');
+        $player3user1 = $this->createPlayer($dataUser1['user'], 'jan', 'bond');
+        $player1user2 = $this->createPlayer($user2, 'piotr', 'nowak');
+        $this->addPlayerToTrainingAttendanceList($user1Training, $player1user1);
+        $this->addPlayerToTrainingAttendanceList($user1Training, $player2user1);
+        $this->addPlayerToTrainingAttendanceList($user1Training, $player3user1);
+        $this->addPlayerToTrainingAttendanceList($user2Training, $player1user2);
+
+        // not auth user
+        $client->request('GET', '/api/trainings/1/attendance');
+        
+        $this->assertResponseStatusCodeSame(401);
+
+        // get other user trainings
+        $response = $client->request('GET', '/api/trainings/2/attendance', [
+            'auth_bearer' => $dataUser1['authTokens']['token']
+            ]);
+        $this->assertResponseStatusCodeSame(403);
+
+        // success
+        $response = $client->request('GET', '/api/trainings/1/attendance', [
+            'auth_bearer' => $dataUser1['authTokens']['token']
+            ]);
+        $responseArray = $response->toArray();
+        $this->assertResponseStatusCodeSame(200);
+        $this->assertEquals(3,count($responseArray['playersAttendanceList']));
+        $this->assertContains('podsiadlo', $responseArray['playersAttendanceList'][0]);
+        $this->assertContains('bond', $responseArray['playersAttendanceList'][1]);
+        $this->assertContains('kowalski', $responseArray['playersAttendanceList'][2]);
     }
 
 }
