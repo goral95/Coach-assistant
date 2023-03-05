@@ -79,12 +79,12 @@ class Player
 
     #[ORM\Column(length: 255)]
     #[Assert\NotBlank]
-    #[Groups(['player:read', 'player:write', 'user:read', 'user:players:collection:read', 'training:attendance:read'])]
+    #[Groups(['player:read', 'player:write', 'user:read', 'user:players:collection:read', 'training:attendance:read', 'user:trainings:attendance:read'])]
     private ?string $name = null;
 
     #[ORM\Column(length: 255)]
     #[Assert\NotBlank]
-    #[Groups(['player:read', 'player:write', 'user:read', 'user:players:collection:read', 'training:attendance:read'])]
+    #[Groups(['player:read', 'player:write', 'user:read', 'user:players:collection:read', 'training:attendance:read', 'user:trainings:attendance:read'])]
     private ?string $surname = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]

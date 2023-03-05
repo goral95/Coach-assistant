@@ -32,6 +32,10 @@ use Symfony\Component\Serializer\Normalizer\DateTimeNormalizer;
         new Post(security: "is_granted('ROLE_USER')"),
         new Get(security: "is_granted('ROLE_USER') and object.getUser() == user",
                 securityMessage: 'Only owner can read training unit'),
+        new Get(security: "is_granted('ROLE_USER') and object.getUser() == user",
+                securityMessage: 'Only owner can read training attendance',
+                uriTemplate: '/trainings/{id}/attendance',
+                normalizationContext: ['groups' => ['training:attendance:read']]),
         new Put(security: "is_granted('ROLE_USER') and object.getUser() == user",
                 securityMessage: 'Only owner can edit training unit',
                 denormalizationContext: ['groups' => ['training:edit']]),
@@ -40,15 +44,6 @@ use Symfony\Component\Serializer\Normalizer\DateTimeNormalizer;
     ],
     normalizationContext: ['groups' => ['training:read']],
     denormalizationContext: ['groups' => ['training:write']],
-    )]
-#[ApiResource(
-    shortName: 'Trainings', 
-    uriTemplate: '/trainings/{id}/attendance',
-    operations: [
-        new Get(security: "is_granted('ROLE_USER') and object.getUser() == user",
-                securityMessage: 'Only owner can read training unit'),
-    ],
-    normalizationContext: ['groups' => ['training:attendance:read']] ,
     )]
 #[ApiResource(
     shortName: 'Trainings', 
@@ -61,11 +56,16 @@ use Symfony\Component\Serializer\Normalizer\DateTimeNormalizer;
     ],
     operations: [new GetCollection(
                     security: "is_granted('ROLE_USER') and id == user.getId()",
-                    securityMessage: 'Only owner can watch players',
-                    order: ['date'])
-                ],
-    normalizationContext: ['groups' => ['user:trainings:collection:read']],
-                
+                    securityMessage: 'Only owner can watch trainings',
+                    order: ['date'],
+                    normalizationContext: ['groups' => ['user:trainings:collection:read']]),
+                new GetCollection(
+                    security: "is_granted('ROLE_USER') and id == user.getId()",
+                    securityMessage: 'Only owner can watch trainings attendance',
+                    uriTemplate: '/users/{id}/trainings-attendance',
+                    order: ['date'],
+                    normalizationContext: ['groups' => ['user:trainings:attendance:read']])
+                ],           
     )]
 #[ApiFilter(DateFilter::class, properties: ['date'])]
 class TrainingUnit
@@ -92,7 +92,7 @@ class TrainingUnit
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     #[Context([DateTimeNormalizer::FORMAT_KEY => 'Y-m-d H:i'])]
-    #[Groups(['training:read', 'training:write', 'training:edit', 'user:trainings:collection:read'])]
+    #[Groups(['training:read', 'training:write', 'training:edit', 'user:trainings:collection:read', 'user:trainings:attendance:read'])]
     #[Assert\NotBlank]
     private ?\DateTimeInterface $date = null;
 
@@ -122,7 +122,7 @@ class TrainingUnit
 
     #[ORM\ManyToMany(targetEntity: Player::class, inversedBy: 'completedTrainings')]
     #[OrderBy(["name" => "ASC", "surname" => "ASC"])]
-    #[Groups(['training:edit', 'training:attendance:read'])]
+    #[Groups(['training:edit', 'training:attendance:read', 'user:trainings:attendance:read'])]
     private Collection $playersAttendanceList;
 
     public function __construct()
