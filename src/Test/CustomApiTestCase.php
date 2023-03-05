@@ -13,6 +13,14 @@ use Symfony\Contracts\HttpClient\ResponseInterface;
 
 class CustomApiTestCase extends ApiTestCase{
 
+    protected function addPlayerToTrainingAttendanceList(TrainingUnit $training, Player $player): TrainingUnit
+    {
+        $training->addPlayersAttendanceList($player);
+        $em = $this->getEntityManager();
+        $em->flush();
+        return $training;
+    }
+
     protected function createTraining(User $user, string $topic, int $duration): TrainingUnit{
         
         $training = new TrainingUnit();

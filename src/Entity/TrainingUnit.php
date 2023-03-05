@@ -10,6 +10,7 @@ use ApiPlatform\Metadata\Post;
 use Doctrine\DBAL\Types\Types;
 use ApiPlatform\Metadata\Delete;
 use Doctrine\ORM\Mapping as ORM;
+use Doctrine\ORM\Mapping\OrderBy;
 use ApiPlatform\Metadata\ApiFilter;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\GetCollection;
@@ -32,29 +33,39 @@ use Symfony\Component\Serializer\Normalizer\DateTimeNormalizer;
         new Get(security: "is_granted('ROLE_USER') and object.getUser() == user",
                 securityMessage: 'Only owner can read training unit'),
         new Put(security: "is_granted('ROLE_USER') and object.getUser() == user",
-                securityMessage: 'Only owner can edit training unit'),
+                securityMessage: 'Only owner can edit training unit',
+                denormalizationContext: ['groups' => ['training:edit']]),
         new Delete(security: "is_granted('ROLE_USER') and object.getUser() == user",
                 securityMessage: 'Only owner can delete training unit')
     ],
     normalizationContext: ['groups' => ['training:read']],
     denormalizationContext: ['groups' => ['training:write']],
     )]
-    #[ApiResource(
-        shortName: 'Trainings', 
-        uriTemplate: '/users/{id}/trainings.{_format}',
-        uriVariables: [
-            'id' => new Link(
-                fromClass: User::class, 
-                fromProperty: 'user'           
-            )        
-        ],
-        operations: [new GetCollection(
-                        security: "is_granted('ROLE_USER') and id == user.getId()",
-                        securityMessage: 'Only owner can watch players',
-                        order: ['date'])
-                    ],
-        normalizationContext: ['groups' => ['user:trainings:collection:read']],
-                    
+#[ApiResource(
+    shortName: 'Trainings', 
+    uriTemplate: '/trainings/{id}/attendance',
+    operations: [
+        new Get(security: "is_granted('ROLE_USER') and object.getUser() == user",
+                securityMessage: 'Only owner can read training unit'),
+    ],
+    normalizationContext: ['groups' => ['training:attendance:read']] ,
+    )]
+#[ApiResource(
+    shortName: 'Trainings', 
+    uriTemplate: '/users/{id}/trainings.{_format}',
+    uriVariables: [
+        'id' => new Link(
+            fromClass: User::class, 
+            fromProperty: 'trainingUnits'           
+        )        
+    ],
+    operations: [new GetCollection(
+                    security: "is_granted('ROLE_USER') and id == user.getId()",
+                    securityMessage: 'Only owner can watch players',
+                    order: ['date'])
+                ],
+    normalizationContext: ['groups' => ['user:trainings:collection:read']],
+                
     )]
 #[ApiFilter(DateFilter::class, properties: ['date'])]
 class TrainingUnit
@@ -65,12 +76,12 @@ class TrainingUnit
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
-    #[Groups(['training:read', 'training:write', 'user:trainings:collection:read'])]
+    #[Groups(['training:read', 'training:write', 'training:edit', 'user:trainings:collection:read'])]
     #[Assert\NotBlank]
     private ?string $topic = null;
 
     #[ORM\Column]
-    #[Groups(['training:read', 'training:write', 'user:trainings:collection:read'])]
+    #[Groups(['training:read', 'training:write', 'training:edit', 'user:trainings:collection:read'])]
     #[Assert\NotBlank]
     #[Assert\Positive]
     #[Assert\DivisibleBy(
@@ -81,26 +92,26 @@ class TrainingUnit
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     #[Context([DateTimeNormalizer::FORMAT_KEY => 'Y-m-d H:i'])]
-    #[Groups(['training:read', 'training:write', 'user:trainings:collection:read'])]
+    #[Groups(['training:read', 'training:write', 'training:edit', 'user:trainings:collection:read'])]
     #[Assert\NotBlank]
     private ?\DateTimeInterface $date = null;
 
     #[ORM\Column(type: Types::TEXT)]
-    #[Groups(['training:read', 'training:write'])]
+    #[Groups(['training:read', 'training:write', 'training:edit'])]
     #[Assert\NotBlank]
     private ?string $warmPart = null;
 
     #[ORM\Column(type: Types::TEXT)]
-    #[Groups(['training:read', 'training:write'])]
+    #[Groups(['training:read', 'training:write', 'training:edit'])]
     #[Assert\NotBlank]
     private ?string $firstMainPart = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
-    #[Groups(['training:read', 'training:write'])]
+    #[Groups(['training:read', 'training:write', 'training:edit'])]
     private ?string $secondMainPart = null;
 
     #[ORM\Column(type: Types::TEXT)]
-    #[Groups(['training:read', 'training:write'])]
+    #[Groups(['training:read', 'training:write', 'training:edit'])]
     #[Assert\NotBlank]
     private ?string $endPart = null;
 
@@ -110,7 +121,8 @@ class TrainingUnit
     private ?User $user = null;
 
     #[ORM\ManyToMany(targetEntity: Player::class, inversedBy: 'completedTrainings')]
-    #[Groups(['training:read'])]
+    #[OrderBy(["name" => "ASC", "surname" => "ASC"])]
+    #[Groups(['training:edit', 'training:attendance:read'])]
     private Collection $playersAttendanceList;
 
     public function __construct()

@@ -2,12 +2,11 @@
 
 namespace App\Entity;
 
+use App\Entity\TrainingUnit;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\Put;
 use ApiPlatform\Metadata\Link;
 use ApiPlatform\Metadata\Post;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use ApiPlatform\Metadata\Delete;
 use Doctrine\ORM\Mapping as ORM;
@@ -15,7 +14,9 @@ use ApiPlatform\Metadata\ApiFilter;
 use App\Repository\PlayerRepository;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\GetCollection;
+use Doctrine\Common\Collections\Collection;
 use ApiPlatform\Doctrine\Orm\Filter\DateFilter;
+use Doctrine\Common\Collections\ArrayCollection;
 use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
 use Symfony\Component\Serializer\Annotation\Groups;
 use Symfony\Component\Serializer\Annotation\Context;
@@ -78,12 +79,12 @@ class Player
 
     #[ORM\Column(length: 255)]
     #[Assert\NotBlank]
-    #[Groups(['player:read', 'player:write', 'user:read', 'training:read', 'user:players:collection:read'])]
+    #[Groups(['player:read', 'player:write', 'user:read', 'user:players:collection:read', 'training:attendance:read'])]
     private ?string $name = null;
 
     #[ORM\Column(length: 255)]
     #[Assert\NotBlank]
-    #[Groups(['player:read', 'player:write', 'user:read', 'training:read', 'user:players:collection:read'])]
+    #[Groups(['player:read', 'player:write', 'user:read', 'user:players:collection:read', 'training:attendance:read'])]
     private ?string $surname = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
